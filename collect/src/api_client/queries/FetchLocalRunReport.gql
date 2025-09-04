@@ -1,0 +1,23 @@
+query FetchLocalRunReport($owner: String!, $name: String!, $runId: String!) {
+  repository(owner: $owner, name: $name) {
+    # settings {
+    #   allowedRegression
+    # }
+    run(id: $runId) {
+     id
+      status
+      url
+      headReports {
+        id
+        impact
+        conclusion
+      }
+      results {
+        time
+        benchmark {
+          name
+        }
+      }
+    }
+  }
+}

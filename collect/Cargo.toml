@@ -1,6 +1,12 @@
 [package]
-name = "collect"
+name = "collect_bench_results"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+anyhow = "1.0.99"
+gql_client = { git = "https://github.com/CodSpeedHQ/gql-client-rs" }
+itertools = "0.14.0"
+nestify = "0.3.3"
+serde = "1.0.219"
+tokio = { version = "1.0", features = ["full"] }
