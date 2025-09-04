@@ -1,0 +1,18 @@
+query GetLatestFinishedRun($owner: String!, $name: String!) {
+  repository(owner: $owner, name: $name) {
+    runs(
+      where: {
+        status: {
+          equals: COMPLETED
+        }
+      }
+      orderBy: { date: desc }
+      take: 1
+    ) {
+      id
+      date
+      status
+    }
+  }
+}
+

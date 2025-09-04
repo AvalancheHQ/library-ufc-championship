@@ -7,32 +7,19 @@ pub struct CodSpeedAPIClient {
     gql_client: GQLClient,
 }
 
-fn build_gql_api_client(api_url: String, with_auth: bool) -> GQLClient {
-    let headers = if with_auth {
-        let mut headers = std::collections::HashMap::new();
-        headers.insert(
-            "Authorization".to_string(),
-            std::env::var("CODSPEED_GRAPHQL_TOKEN").unwrap(),
-        );
-        headers
-    } else {
-        Default::default()
-    };
-
-    GQLClient::new_with_config(ClientConfig {
-        endpoint: api_url,
-        timeout: Some(10),
-        headers: Some(headers),
-        proxy: None,
-    })
-}
-
 #[derive(Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct FetchLocalRunReportVars {
     pub owner: String,
     pub name: String,
     pub run_id: String,
+}
+
+#[derive(Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct GetLatestFinishedRunVars {
+    pub owner: String,
+    pub name: String,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
@@ -79,6 +66,15 @@ pub struct FetchLocalRunBenchmarkResult {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct FetchLocalRunBenchmark {
     pub name: String,
+    pub uri: String,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GetLatestFinishedRun {
+    pub id: String,
+    pub date: String,
+    pub status: RunStatus,
 }
 
 nest! {
@@ -91,10 +87,25 @@ nest! {
     }
 }
 
+nest! {
+    #[derive(Debug, Deserialize, Serialize)]*
+    #[serde(rename_all = "camelCase")]*
+    struct GetLatestFinishedRunData {
+        repository: pub struct GetLatestFinishedRunRepository {
+            runs: Vec<GetLatestFinishedRun>,
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct FetchLocalRunReportResponse {
     // pub allowed_regression: f64,
     pub run: FetchLocalRunReportRun,
+}
+
+#[derive(Debug)]
+pub struct GetLatestFinishedRunResponse {
+    pub run: Option<GetLatestFinishedRun>,
 }
 
 impl CodSpeedAPIClient {
@@ -134,6 +145,28 @@ impl CodSpeedAPIClient {
                 bail!("Your session has expired, please login again using `codspeed auth login`")
             }
             Err(err) => bail!("Failed to fetch local run report: {}", err),
+        }
+    }
+
+    pub async fn get_latest_finished_run(
+        &self,
+        vars: GetLatestFinishedRunVars,
+    ) -> Result<GetLatestFinishedRunResponse> {
+        let response = self
+            .gql_client
+            .query_with_vars_unwrap::<GetLatestFinishedRunData, GetLatestFinishedRunVars>(
+                include_str!("queries/FetchLastRunId.gql"),
+                vars.clone(),
+            )
+            .await;
+        match response {
+            Ok(response) => Ok(GetLatestFinishedRunResponse {
+                run: response.repository.runs.into_iter().next(),
+            }),
+            Err(err) if err.contains_error_code("UNAUTHENTICATED") => {
+                bail!("Your session has expired, please login again using `codspeed auth login`")
+            }
+            Err(err) => bail!("Failed to get latest finished run: {}", err),
         }
     }
 }

@@ -1,8 +1,5 @@
 query FetchLocalRunReport($owner: String!, $name: String!, $runId: String!) {
   repository(owner: $owner, name: $name) {
-    # settings {
-    #   allowedRegression
-    # }
     run(id: $runId) {
      id
       status
@@ -16,6 +13,7 @@ query FetchLocalRunReport($owner: String!, $name: String!, $runId: String!) {
         time
         benchmark {
           name
+          uri
         }
       }
     }
