@@ -3,7 +3,7 @@ mod prelude;
 mod api_client;
 
 use crate::api_client::CodSpeedAPIClient;
-use crate::api_client::{FetchLocalRunReportVars, GetLatestFinishedRunVars};
+use crate::api_client::{FetchRunReportVars, GetLatestFinishedRunVars};
 use crate::prelude::*;
 
 pub async fn run() -> Result<()> {
@@ -22,7 +22,7 @@ pub async fn run() -> Result<()> {
     };
 
     let run = client
-        .fetch_local_run_report(FetchLocalRunReportVars {
+        .fetch_local_run_report(FetchRunReportVars {
             owner: "AvalancheHQ".to_string(),
             name: "library-ufc-championship".to_string(),
             run_id,

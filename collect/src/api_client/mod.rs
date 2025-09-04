@@ -9,7 +9,7 @@ pub struct CodSpeedAPIClient {
 
 #[derive(Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct FetchLocalRunReportVars {
+pub struct FetchRunReportVars {
     pub owner: String,
     pub name: String,
     pub run_id: String,
@@ -32,12 +32,11 @@ pub enum ReportConclusion {
 
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct FetchLocalRunReportRun {
+pub struct FetchRunReportRun {
     pub id: String,
     pub status: RunStatus,
     pub url: String,
-    pub head_reports: Vec<FetchLocalRunReportHeadReport>,
-    pub results: Vec<FetchLocalRunBenchmarkResult>,
+    pub results: Vec<FetchRunBenchmarkResult>,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
@@ -50,21 +49,13 @@ pub enum RunStatus {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct FetchLocalRunReportHeadReport {
-    pub id: String,
-    pub impact: Option<f64>,
-    pub conclusion: ReportConclusion,
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-pub struct FetchLocalRunBenchmarkResult {
+pub struct FetchRunBenchmarkResult {
     pub time: f64,
-    pub benchmark: FetchLocalRunBenchmark,
+    pub benchmark: FetchRunBenchmark,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct FetchLocalRunBenchmark {
+pub struct FetchRunBenchmark {
     pub name: String,
     pub uri: String,
 }
@@ -80,9 +71,9 @@ pub struct GetLatestFinishedRun {
 nest! {
     #[derive(Debug, Deserialize, Serialize)]*
     #[serde(rename_all = "camelCase")]*
-    struct FetchLocalRunReportData {
-        repository: pub struct FetchLocalRunReportRepository {
-            run: FetchLocalRunReportRun,
+    struct FetchRunReportData {
+        repository: pub struct FetchRunReportRepository {
+            run: FetchRunReportRun,
         }
     }
 }
@@ -98,9 +89,9 @@ nest! {
 }
 
 #[derive(Debug)]
-pub struct FetchLocalRunReportResponse {
+pub struct FetchRunReportResponse {
     // pub allowed_regression: f64,
-    pub run: FetchLocalRunReportRun,
+    pub run: FetchRunReportRun,
 }
 
 #[derive(Debug)]
@@ -128,17 +119,17 @@ impl CodSpeedAPIClient {
 
     pub async fn fetch_local_run_report(
         &self,
-        vars: FetchLocalRunReportVars,
-    ) -> Result<FetchLocalRunReportResponse> {
+        vars: FetchRunReportVars,
+    ) -> Result<FetchRunReportResponse> {
         let response = self
             .gql_client
-            .query_with_vars_unwrap::<FetchLocalRunReportData, FetchLocalRunReportVars>(
-                include_str!("queries/FetchLocalRunReport.gql"),
+            .query_with_vars_unwrap::<FetchRunReportData, FetchRunReportVars>(
+                include_str!("queries/FetchRunReport.gql"),
                 vars.clone(),
             )
             .await;
         match response {
-            Ok(response) => Ok(FetchLocalRunReportResponse {
+            Ok(response) => Ok(FetchRunReportResponse {
                 run: response.repository.run,
             }),
             Err(err) if err.contains_error_code("UNAUTHENTICATED") => {

@@ -4,11 +4,6 @@ query FetchLocalRunReport($owner: String!, $name: String!, $runId: String!) {
      id
       status
       url
-      headReports {
-        id
-        impact
-        conclusion
-      }
       results {
         time
         benchmark {
