@@ -16,3 +16,8 @@ divan = { workspace = true }
 name = "small"
 path = "small.rs"
 harness = false
+
+[[bench]]
+name = "large"
+path = "large.rs"
+harness = false
