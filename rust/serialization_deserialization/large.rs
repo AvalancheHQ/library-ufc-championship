@@ -45,6 +45,15 @@ mod serialize {
             .with_inputs(|| data.clone())
             .bench_values(|data| sonic_rs::to_string(&data).unwrap())
     }
+
+    #[divan::bench]
+    fn simd_json(bencher: divan::Bencher) {
+        let data = TestData::sample();
+
+        bencher
+            .with_inputs(|| data.clone())
+            .bench_values(|data| simd_json::to_string(&data).unwrap())
+    }
 }
 
 #[divan::bench_group(min_time = Duration::from_secs(3))]
@@ -69,6 +78,19 @@ mod deserialize {
         bencher.with_inputs(|| json.clone()).bench_values(|json| {
             let _: TestData = sonic_rs::from_str(&json).unwrap();
         })
+    }
+
+    #[divan::bench]
+    fn simd_json(bencher: divan::Bencher) {
+        let data = TestData::sample();
+        let json = simd_json::to_string(&data).unwrap();
+
+        bencher
+            .with_inputs(|| json.clone())
+            .bench_values(|mut json| {
+                let _: TestData =
+                    unsafe { simd_json::serde::from_slice(json.as_bytes_mut()).unwrap() };
+            })
     }
 }
 
@@ -95,5 +117,14 @@ mod round_trip {
             let _: TestData = sonic_rs::from_str(&json).unwrap();
         })
     }
-}
 
+    #[divan::bench]
+    fn simd_json(bencher: divan::Bencher) {
+        let data = TestData::sample();
+
+        bencher.with_inputs(|| data.clone()).bench_values(|data| {
+            let mut json = simd_json::to_string(&data).unwrap();
+            let _: TestData = unsafe { simd_json::serde::from_slice(json.as_bytes_mut()).unwrap() };
+        })
+    }
+}
